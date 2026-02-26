@@ -1,0 +1,63 @@
+{
+  "name": "@unlayer/cli",
+  "version": "1.0.0",
+  "description": "Command-line interface for Unlayer — manage templates, projects, and workspaces from your terminal",
+  "main": "dist/index.js",
+  "bin": {
+    "unlayer": "dist/index.js"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unlayer/cli.git"
+  },
+  "homepage": "https://unlayer.com",
+  "bugs": {
+    "url": "https://github.com/unlayer/cli/issues"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "pnpm build && vitest run src/__tests__/e2e",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "unlayer",
+    "cli",
+    "email",
+    "templates",
+    "email-editor",
+    "drag-and-drop"
+  ],
+  "author": "Unlayer",
+  "license": "MIT",
+  "dependencies": {
+    "@inkjs/ui": "^2.0.0",
+    "@unlayer/sdk": "^0.1.0",
+    "commander": "^12.1.0",
+    "conf": "^13.0.1",
+    "ink": "^6.8.0",
+    "open": "^11.0.0",
+    "react": "^19.2.4",
+    "update-notifier": "^7.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.10",
+    "@types/react": "^19.2.14",
+    "@types/update-notifier": "^6.0.8",
+    "tsup": "^8.3.0",
+    "typescript": "^5.4.2",
+    "vitest": "^4.0.18"
+  }
+}

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unlayer Email Editor</title>
+  <script src="https://editor.unlayer.com/embed.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #1a1a2e;
+      border-bottom: 1px solid #16213e;
+    }
+
+    .toolbar-title {
+      color: #fff;
+      font-weight: 600;
+      margin-right: auto;
+    }
+
+    .toolbar button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .btn-secondary {
+      background: #374151;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+    }
+
+    #editor-container {
+      height: calc(100vh - 57px);
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      background: #1f2937;
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      background: #059669;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="toolbar-title">Unlayer Email Editor</span>
+    <button class="btn-secondary" onclick="loadDesign()">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+        <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+      </svg>
+      Load
+    </button>
+    <button class="btn-primary" onclick="saveDesign()">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/>
+      </svg>
+      Save Design
+    </button>
+    <button class="btn-success" onclick="exportHtml()">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+      </svg>
+      Export HTML
+    </button>
+  </div>
+
+  <div id="editor-container"></div>
+
+  <input type="file" id="file-input" class="hidden-input" accept=".json" onchange="handleFileSelect(event)">
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // Initialize the Unlayer editor
+    unlayer.init({
+      id: 'editor-container',
+      projectId: {{PROJECT_ID}}, // Replace with your project ID from console.unlayer.com
+      displayMode: 'email',
+      appearance: {
+        theme: 'modern_light',
+      },
+      tools: {
+        // Enable/disable tools as needed
+      },
+      features: {
+        preview: true,
+        imageEditor: true,
+        undoRedo: true,
+        stockImages: {
+          enabled: true,
+          safeSearch: true,
+        },
+      },
+    });
+
+    // Load sample design on startup
+    fetch('./designs/sample.json')
+      .then(response => response.json())
+      .then(design => {
+        unlayer.loadDesign(design);
+        showToast('Sample template loaded');
+      })
+      .catch(() => {
+        console.log('No sample design found, starting with blank template');
+      });
+
+    // Save design as JSON
+    function saveDesign() {
+      unlayer.saveDesign(function(design) {
+        const json = JSON.stringify(design, null, 2);
+        downloadFile('design.json', json, 'application/json');
+        showToast('Design saved!', 'success');
+      });
+    }
+
+    // Export as HTML
+    function exportHtml() {
+      unlayer.exportHtml(function(data) {
+        downloadFile('email.html', data.html, 'text/html');
+        showToast('HTML exported!', 'success');
+      }, {
+        minify: true,
+      });
+    }
+
+    // Load design from file
+    function loadDesign() {
+      document.getElementById('file-input').click();
+    }
+
+    // Handle file selection
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const design = JSON.parse(e.target.result);
+          // Support both { body: {...} } and { design: { body: {...} } } formats
+          const designData = design.design || design;
+          unlayer.loadDesign(designData);
+          showToast('Design loaded!', 'success');
+        } catch (err) {
+          showToast('Invalid JSON file');
+        }
+      };
+      reader.readAsText(file);
+
+      // Reset input so same file can be loaded again
+      event.target.value = '';
+    }
+
+    // Download helper
+    function downloadFile(filename, content, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Toast notification
+    function showToast(message, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+
+      // Show
+      setTimeout(() => toast.classList.add('show'), 10);
+
+      // Hide after 3 seconds
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
