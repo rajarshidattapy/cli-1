@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { execSync, type ExecSyncOptionsWithBufferEncoding } from 'child_process';
+import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -39,7 +39,7 @@ function run(args: string, opts?: { cwd?: string }): string {
     env: { ...process.env, NO_COLOR: '1', CI: '1' },
     encoding: 'utf-8',
     stdio: ['pipe', 'pipe', 'pipe'], // capture stdout, suppress stderr
-  } as ExecSyncOptionsWithBufferEncoding).toString();
+  }).toString();
 }
 
 /**
