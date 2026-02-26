@@ -24,7 +24,7 @@
     "url": "https://github.com/unlayer/cli/issues"
   },
   "scripts": {
-    "prepare": "tsup",
+    "prepare": "npx tsup",
     "build": "tsup",
     "dev": "tsup --watch",
     "start": "node dist/index.js",
