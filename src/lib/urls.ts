@@ -24,13 +24,17 @@ export function getProjectCreateUrl(workspaceId: number | string): string {
 }
 
 /** CLI auth API route on the console (creates PAT and redirects to localhost callback) */
-export function getCliAuthUrl(port: number, state: string): string {
-  return `${getConsoleUrl()}/api/cli-auth?port=${port}&state=${encodeURIComponent(state)}`;
+export function getCliAuthUrl(port: number, state: string, tokenId?: number | null): string {
+  let url = `${getConsoleUrl()}/api/cli-auth?port=${port}&state=${encodeURIComponent(state)}`;
+  if (tokenId) {
+    url += `&tokenId=${tokenId}`;
+  }
+  return url;
 }
 
 /** Accounts login page with returnUrl pointing to cli-auth (chains: login → PAT → localhost) */
-export function getLoginWithCliAuthUrl(port: number, state: string): string {
-  const cliAuthUrl = getCliAuthUrl(port, state);
+export function getLoginWithCliAuthUrl(port: number, state: string, tokenId?: number | null): string {
+  const cliAuthUrl = getCliAuthUrl(port, state, tokenId);
   return `${getAccountsUrl()}/?returnUrl=${encodeURIComponent(cliAuthUrl)}`;
 }
 

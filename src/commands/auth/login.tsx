@@ -6,6 +6,8 @@ import { App } from '../../components/App.js';
 import { KeyValue } from '../../components/KeyValue.js';
 import {
   setToken,
+  setTokenId,
+  getTokenId,
   setApiUrl,
   setWorkspaceId,
   setProjectId,
@@ -123,7 +125,8 @@ function LoginCommand({
         }
 
         authServerRef.current = server;
-        const url = getLoginWithCliAuthUrl(server.port, server.state);
+        const oldTokenId = getTokenId();
+        const url = getLoginWithCliAuthUrl(server.port, server.state, oldTokenId);
         setAuthUrl(url);
 
         await openWithFallback(url);
@@ -140,6 +143,9 @@ function LoginCommand({
         }
 
         setTokenValue(result.token);
+        if (result.tokenId) {
+          setTokenId(result.tokenId);
+        }
         setStep('verifying');
         server.close();
       } catch (err) {

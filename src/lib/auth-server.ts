@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 
 export interface AuthResult {
   token: string;
+  tokenId: number | null;
   email: string;
 }
 
@@ -135,6 +136,7 @@ export async function startAuthServer(options?: {
     const callbackToken = url.searchParams.get('token');
     const callbackState = url.searchParams.get('state');
     const callbackEmail = url.searchParams.get('email') || '';
+    const callbackTokenId = url.searchParams.get('tokenId');
 
     // Validate state parameter
     if (callbackState !== state) {
@@ -155,7 +157,12 @@ export async function startAuthServer(options?: {
     res.end(SUCCESS_HTML);
 
     clearTimeout(timeoutId);
-    resolveAuth!({ token: callbackToken, email: callbackEmail });
+    const parsedTokenId = callbackTokenId ? parseInt(callbackTokenId, 10) : null;
+    resolveAuth!({
+      token: callbackToken,
+      tokenId: Number.isNaN(parsedTokenId) ? null : parsedTokenId,
+      email: callbackEmail,
+    });
   });
 
   // Bind to localhost only

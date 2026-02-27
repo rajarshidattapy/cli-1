@@ -19,6 +19,7 @@ export interface EnvironmentUrls {
 // ─── Config Interface ──────────────────────────────────────
 export interface UnlayerConfig {
   token?: string;
+  tokenId?: number | null;
   tokenEnvVar?: string;
   apiUrl?: string;
   workspaceId?: number | null;
@@ -32,6 +33,9 @@ const DEFAULT_TOKEN_ENV_VAR = 'UNLAYER_TOKEN';
 const schema = {
   token: {
     type: 'string' as const,
+  },
+  tokenId: {
+    type: ['number', 'null'] as const,
   },
   tokenEnvVar: {
     type: 'string' as const,
@@ -204,6 +208,15 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   config.delete('token');
+  config.delete('tokenId');
+}
+
+export function getTokenId(): number | null | undefined {
+  return config.get('tokenId');
+}
+
+export function setTokenId(id: number | null): void {
+  config.set('tokenId', id);
 }
 
 export function getApiUrl(): string {
