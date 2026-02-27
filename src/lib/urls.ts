@@ -38,12 +38,6 @@ export function getLoginWithCliAuthUrl(port: number, state: string, tokenId?: nu
   return `${getAccountsUrl()}/?returnUrl=${encodeURIComponent(cliAuthUrl)}`;
 }
 
-/** Accounts signup page with returnUrl pointing to cli-auth (chains: signup → PAT → localhost) */
-export function getSignupWithCliAuthUrl(port: number, state: string): string {
-  const cliAuthUrl = getCliAuthUrl(port, state);
-  return `${getAccountsUrl()}/signup?returnUrl=${encodeURIComponent(cliAuthUrl)}`;
-}
-
 /** Console template editor page */
 export function getTemplateEditorUrl(
   projectId: number | string,

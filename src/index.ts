@@ -18,7 +18,6 @@ import {
   loginCommand,
   logoutCommand,
   whoamiCommand,
-  signupCommand,
 } from './commands/auth/index.js';
 
 // Resource commands
@@ -64,8 +63,7 @@ const formatHelp = () => {
 
   // Authentication
   console.log(`  ${c.yellow('Authentication')}`);
-  console.log(`    ${c.white('signup')}        ${c.dim('Create an account and connect your CLI')}`);
-  console.log(`    ${c.white('login')}         ${c.dim('Authenticate with your Personal Access Token')}`);
+  console.log(`    ${c.white('login')}         ${c.dim('Authenticate with your Unlayer account')}`);
   console.log(`    ${c.white('logout')}        ${c.dim('Clear stored credentials')}`);
   console.log(`    ${c.white('whoami')}        ${c.dim('Show current user info')}`);
   console.log();
@@ -93,9 +91,8 @@ const formatHelp = () => {
 
   // Quick examples
   console.log(`  ${c.yellow('Quick Start')}`);
-  console.log(`    ${c.dim('$')} ${c.cyan('unlayer signup')}                       ${c.dim('# Create account')}`);
-  console.log(`    ${c.dim('$')} ${c.cyan('unlayer init my-app')}                  ${c.dim('# Create new project')}`);
   console.log(`    ${c.dim('$')} ${c.cyan('unlayer login')}                        ${c.dim('# Authenticate')}`);
+  console.log(`    ${c.dim('$')} ${c.cyan('unlayer init my-app')}                  ${c.dim('# Create new project')}`);
   console.log(`    ${c.dim('$')} ${c.cyan('unlayer template list')}                ${c.dim('# List templates')}`);
   console.log(`    ${c.dim('$')} ${c.cyan('unlayer pull')}                         ${c.dim('# Pull all templates locally')}`);
   console.log(`    ${c.dim('$')} ${c.cyan('unlayer diff ./template.json')}         ${c.dim('# Compare local vs remote')}`);
@@ -117,7 +114,6 @@ program
   .addHelpCommand('help [command]', 'Display help for a command');
 
 // Authentication commands (top-level)
-program.addCommand(signupCommand);
 program.addCommand(loginCommand);
 program.addCommand(logoutCommand);
 program.addCommand(whoamiCommand);
