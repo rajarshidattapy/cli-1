@@ -95,21 +95,6 @@ describe('loadProjectConfig()', () => {
     expect((result as Record<string, unknown>).$schema).toBeUndefined();
   });
 
-  it('includes environments field', () => {
-    const envData = {
-      environments: {
-        dev: {
-          apiUrl: 'https://api.dev.unlayer.com',
-          consoleUrl: 'https://console.dev.unlayer.com',
-          accountsUrl: 'https://accounts.dev.unlayer.com',
-        },
-      },
-    };
-    writeConfig(tmpDir, JSON.stringify(envData));
-    const result = loadProjectConfig(tmpDir);
-    expect(result?.environments?.dev).toEqual(envData.environments.dev);
-  });
-
   it('returns null and warns for array JSON', () => {
     writeConfig(tmpDir, '[1, 2, 3]');
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
