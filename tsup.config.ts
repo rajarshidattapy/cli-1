@@ -29,7 +29,10 @@ export default defineConfig({
 
     if (existsSync(srcData)) {
       mkdirSync(distData, { recursive: true });
-      cpSync(srcData, distData, { recursive: true });
+      cpSync(srcData, distData, {
+        recursive: true,
+        filter: (src) => !src.includes('__tests__'),
+      });
     }
   },
 });
