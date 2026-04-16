@@ -1,6 +1,6 @@
 {
   "name": "@unlayer/cli",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Command-line interface for Unlayer — manage templates, projects, and workspaces from your terminal",
   "main": "dist/index.js",
   "bin": {
@@ -30,7 +30,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "pnpm build && vitest run src/__tests__/e2e",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm build && pnpm test"
   },
   "keywords": [
     "unlayer",
@@ -42,6 +43,9 @@
   ],
   "author": "Unlayer",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@inkjs/ui": "^2.0.0",
     "@unlayer/sdk": "^0.1.0",
