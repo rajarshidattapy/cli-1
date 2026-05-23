@@ -1,0 +1,187 @@
+# Release & Publish
+#
+# Gated publish flow:
+#   1. PR merged to main → triggers build & test
+#   2. A reviewer approves the publish in the Actions UI (environment gate)
+#   3. Package is published to npm via trusted publishing (OIDC)
+#
+# Version: reads the latest published version from npm and bumps from that.
+# Defaults to patch. Add a `release:minor` or `release:major` PR label to
+# override. Manual dispatch also supports bump selection.
+#
+# Auth: Uses npm trusted publishing (OIDC) — no NPM_TOKEN needed.
+# The `npm-publish` environment must be configured in repo Settings →
+# Environments with at least one required reviewer.
+#
+# npm trusted publishing must also be configured on npmjs.com:
+#   Package Settings → Publishing access → Add trusted publisher →
+#     Repository: unlayer/cli
+#     Workflow:   publish.yml
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+        default: patch
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+  publish:
+    name: Publish to npm
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish
+      cancel-in-progress: false
+    environment: npm-publish
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      # setup-node with registry-url enables OIDC token exchange for npm publish.
+      - name: Setup Node.js 24 (with npm registry for OIDC)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: Update npm for trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.bump }}" >> $GITHUB_OUTPUT
+          else
+            # Check labels on the PR associated with this commit
+            LABELS=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" --jq '.[0].labels[].name' 2>/dev/null || echo "")
+            if echo "$LABELS" | grep -Fxq "release:major"; then
+              echo "type=major" >> $GITHUB_OUTPUT
+            elif echo "$LABELS" | grep -Fxq "release:minor"; then
+              echo "type=minor" >> $GITHUB_OUTPUT
+            else
+              echo "type=patch" >> $GITHUB_OUTPUT
+            fi
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version
+        id: version
+        run: |
+          # Read latest published version from npm (falls back to package.json for first publish)
+          CURRENT=$(npm view @unlayer/cli version 2>/dev/null || node -p "require('./package.json').version")
+          echo "current=$CURRENT" >> $GITHUB_OUTPUT
+
+          # Write current version to package.json so npm version can bump from it
+          npm version "$CURRENT" --no-git-tag-version --allow-same-version
+
+          # Bump
+          VERSION=$(npm version ${{ steps.bump.outputs.type }} --no-git-tag-version)
+          VERSION="${VERSION#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Pre-publish summary
+        run: |
+          BUNDLE_SIZE=$(wc -c < dist/index.js | tr -d ' ')
+          FILE_COUNT=$(find dist -type f | wc -l | tr -d ' ')
+
+          echo "## Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Package** | \`@unlayer/cli\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Version** | ${{ steps.version.outputs.current }} → ${{ steps.version.outputs.version }} (${{ steps.bump.outputs.type }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Auth** | Trusted publishing (OIDC) |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Bundle** | ${BUNDLE_SIZE} bytes |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Files in dist** | ${FILE_COUNT} |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Publish to npm (trusted publishing)
+        run: npm publish --access public
+
+      - name: Tag release
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --tags origin | awk '{print $2}' | grep -Fxq "refs/tags/$TAG"; then
+            echo "Tag $TAG already exists — skipping"
+          else
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Create GitHub Release
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping"
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
